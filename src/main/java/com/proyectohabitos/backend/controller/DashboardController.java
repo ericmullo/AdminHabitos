@@ -3,6 +3,7 @@ package com.proyectohabitos.backend.controller;
 
 import com.proyectohabitos.backend.dto.FamilyWeeklyDashboardResponse;
 import com.proyectohabitos.backend.dto.HabitWeeklySummaryResponse;
+import com.proyectohabitos.backend.dto.CompareFamiliesResponse;
 import com.proyectohabitos.backend.model.Family;
 import com.proyectohabitos.backend.repository.FamilyRepository;
 import com.proyectohabitos.backend.service.DashboardService;
@@ -14,7 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/dashboard")          // 👈 IMPORTANTE: empieza en /api
+@RequestMapping("/api/dashboard")          // 👈 se mantiene igual
 @CrossOrigin(origins = "*")                // 👈 deja todo abierto mientras pruebas
 public class DashboardController {
 
@@ -27,8 +28,8 @@ public class DashboardController {
         this.familyRepository = familyRepository;
     }
 
-    @GetMapping("/family/{familyId}/weekly")
-    public FamilyWeeklyDashboardResponse getWeeklyDashboard(@PathVariable Long familyId) {
+    // ========= HELPER PRIVADO PARA ARMAR EL DASHBOARD DE UNA FAMILIA =========
+    private FamilyWeeklyDashboardResponse buildWeeklyDashboard(Long familyId) {
 
         Map<String, Double> porHabito =
                 dashboardService.porcentajeSemanalPorHabito(familyId);
@@ -56,5 +57,24 @@ public class DashboardController {
                 overall,
                 habits
         );
+    }
+
+    // ========= ENDPOINT EXISTENTE (individual) =========
+    @GetMapping("/family/{familyId}/weekly")
+    public FamilyWeeklyDashboardResponse getWeeklyDashboard(@PathVariable Long familyId) {
+        return buildWeeklyDashboard(familyId);
+    }
+
+    // ========= NUEVO ENDPOINT DE COMPARACIÓN =========
+    @GetMapping("/compare")
+    public CompareFamiliesResponse compareFamilies(
+            @RequestParam("family1Id") Long family1Id,
+            @RequestParam("family2Id") Long family2Id
+    ) {
+
+        FamilyWeeklyDashboardResponse f1 = buildWeeklyDashboard(family1Id);
+        FamilyWeeklyDashboardResponse f2 = buildWeeklyDashboard(family2Id);
+
+        return new CompareFamiliesResponse(f1, f2);
     }
 }
